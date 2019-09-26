@@ -8,7 +8,7 @@ const PORT = 8080;
 
 const url = "mongodb://localhost:27017";
 
-async function readTweets(resolve, reject) {
+async function readTweets() {
 
   try {
     const client = new MongoClient(url);
@@ -21,8 +21,8 @@ async function readTweets(resolve, reject) {
     const prom = colTweets.find({}).limit(20).toArray();
     const tweets = await prom;
 
-    resolve(tweets);
     client.close();
+    return tweets;
     
   } catch (err) {
     reject(err);
@@ -82,12 +82,11 @@ app.get("/", (req, res) => {
     );
 });
 
-app.get("/data", (req, res) => {
-  readTweets(tweets => {
-    res.json(tweets);
-  }, err => {
-    console.log("Error: " + err);
-  });
+app.get("/data", async (req, res) => {
+
+  const tweets = await readTweets();
+  res.json(tweets);
+
 });
 
 app.listen(PORT, () => {
