@@ -8,6 +8,40 @@ const PORT = 8080;
 
 const url = "mongodb://localhost:27017";
 
+const bodyParser = require('body-parser');
+app.use(bodyParser.json()); // support json encoded bodies
+app.use(bodyParser.urlencoded({ extended: true })); // support encoded bodies
+
+async function getUsers() {
+  const client = new MongoClient(url);
+
+  await client.connect();
+
+  const db = client.db("nodeExpress");
+  const colUsers = db.collection("users");
+
+  const users = await colUsers.find({}).toArray();
+
+  client.close();
+
+  return users;
+}
+
+async function addUser(userName, userAge) {
+  const client = new MongoClient(url);
+
+  await client.connect();
+
+  const db = client.db("nodeExpress");
+  const colUsers = db.collection("users");
+
+  const resp = await colUsers.insertOne( { name: userName, age: userAge } );
+
+  client.close();
+
+  return resp;
+}
+
 async function readTweets() {
 
   try {
@@ -22,6 +56,7 @@ async function readTweets() {
     const tweets = await prom;
 
     client.close();
+
     return tweets;
     
   } catch (err) {
@@ -86,8 +121,18 @@ app.get("/data", async (req, res) => {
 
   const tweets = await readTweets();
   res.json(tweets);
-
 });
+
+app.get("/users", async (req, res) => {
+  const users = await getUsers();
+  res.json(users);
+});
+
+app.post("/add", async (req, res) => {
+  const id = await addUser(req.body.name, req.body.age);
+  res.json(id);
+});
+
 
 app.listen(PORT, () => {
   console.log(`My app is running at http://localhost:${PORT}`);
